@@ -15,3 +15,24 @@ export class AppController {
     return this.appService.getDatabaseName();
   }
 }
+
+
+
+
+// import { Get, Injectable } from '@nestjs/common';
+// import { DataSource } from 'typeorm';
+// import { InjectDataSource } from '@nestjs/typeorm';
+
+// @Injectable()
+// export class AppService {
+//   constructor(@InjectDataSource() private dataSource: DataSource) { }
+
+//   @Get()
+//   getHello(): string {
+//     return 'Hello World!';
+//   }
+//   @Get('database-name')
+//   getDatabaseName(): string {
+//     return this.dataSource.options.database as string;
+//   }
+// }

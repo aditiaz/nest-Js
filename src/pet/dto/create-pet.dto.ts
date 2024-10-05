@@ -1,9 +1,12 @@
-import { IsString } from "class-validator";
+import { IsInstance, IsInt, IsString } from "class-validator";
 
-export  class CreatePetDto {
+export class CreatePetDto {
     @IsString()
-    pet_name:string;
+    pet_name: string;
 
     @IsString()
-    owner_name:string;
+    owner_name: string;
+
+    @IsInt()
+    age: number
 }

@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NestMiddleware } from "@nestjs/common";
+import { Request, Response } from 'express';
 import { ConfigService } from "@nestjs/config";
 import { DataSource } from "typeorm";
 
@@ -18,29 +19,6 @@ export class DynamicDatabaseService {
         return this.database_list;
     }
 
-    async switchConnection(connectionName: string): Promise<DataSource> {
-        // Mengecek apakah ada koneksi aktif
-        if (this.activeDataSource && this.activeDataSource.isInitialized) {
-            if (this.activeDataSource.options.database === connectionName) {
-                return this.activeDataSource; // Koneksi yang sama, tidak perlu diubah
-            }
-            await this.activeDataSource.destroy(); // Hentikan koneksi sebelumnya
-        }
-
-        // Membuat koneksi baru
-        this.activeDataSource = new DataSource({
-            type: 'postgres', // atau jenis database lain yang kamu gunakan
-            host: this.configService.getOrThrow('HOST'),
-            port: this.configService.getOrThrow('PORT'),
-            username: this.configService.getOrThrow('USERNAME'),
-            password: this.configService.getOrThrow('PASSWORD'),
-            database: connectionName, // Nama database yang dipilih
-        });
-
-        // Inisialisasi koneksi baru
-        return await this.activeDataSource.initialize();
-    }
-
     getCurrentDatabase(): string {
         // Memastikan activeDataSource sudah diinisialisasi sebelum mengakses options
         if (!this.activeDataSource) {
@@ -48,4 +26,7 @@ export class DynamicDatabaseService {
         }
         return this.activeDataSource.options.database as string; // Mengembalikan nama database aktif
     }
+
+
+
 }
