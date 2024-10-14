@@ -1,31 +1,33 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import "reflect-metadata"
+import { DynamicEndPointsModule } from './dynamic_enpoints/dynamic.endpoints.module';
+import { RequestService } from './request.service';
+import { AuthenticationMiddleware } from './middleware/authentication.middleware';
+import { DynamicEndPointsService } from './dynamic_enpoints/dynamic.endpoints.service';
 import { DataBaseModule } from './database/database.module';
-import { PetModule } from './pet/pet.module';
-import { DynamicDatabaseModule } from './dynamic_endpoints/dynamic_database/dynamic.database.module';
-import { SwitchDbMiddleware } from './middleware/switchDatabase';
-// import { SwitchDbController } from './middleware/switchDatabase.controller';
-import { GlobalVariableService } from './helper/globalVar';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    DataBaseModule,
-    PetModule,
-    DynamicDatabaseModule,
+    DynamicEndPointsModule,
+    DataBaseModule
   ],
 
   exports: [],
   controllers: [AppController],
-  providers: [AppService, GlobalVariableService],
+  providers: [AppService, RequestService, DynamicEndPointsService],
 })
-export class AppModule {
+export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(SwitchDbMiddleware)
-      .forRoutes('/database/switch/:dbName');
+      .apply(AuthenticationMiddleware)
+      .forRoutes(
+        { path: '/dynamic_endpoints', method: RequestMethod.GET, },
+        { path: '/dynamic_endpoints/:db_name', method: RequestMethod.GET, },
+        { path: '/dynamic_endpoints/:db_name/:table_name', method: RequestMethod.GET, }
+      );
   }
 }
 

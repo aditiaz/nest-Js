@@ -2,17 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { InjectDataSource } from '@nestjs/typeorm';
-
+import { ConfigService } from '@nestjs/config';
 @Injectable()
-export class PetService {
+export class DynamicEndPointsService {
     private currentDataSource: DataSource;
+    private readonly database_list: string[];
+
 
     constructor(
         @InjectDataSource('nest_j') private readonly nestJDataSource: DataSource,
         @InjectDataSource('adit') private readonly aditDataSource: DataSource,
+        private readonly configService: ConfigService
     ) {
         // Set data source default
         this.currentDataSource = this.nestJDataSource;
+        this.database_list = [
+            this.configService.getOrThrow("DATABASE_NAME1"),
+            this.configService.getOrThrow("DATABASE_NAME2"),
+        ];
     }
 
     // Method untuk mengganti DataSource secara dinamis
@@ -23,6 +30,13 @@ export class PetService {
             this.currentDataSource = this.aditDataSource;
         }
     }
+
+
+
+    getDatabaseList(): string[] {
+        return this.database_list;
+    }
+
     async create(createPetDto: CreatePetDto): Promise<any> {
         const queryRunner = this.currentDataSource.createQueryRunner();
         await queryRunner.connect();
@@ -41,16 +55,11 @@ export class PetService {
         }
     }
 
-    async findAll(): Promise<any[]> {
+    async findAll(table_name: string): Promise<any[]> {
         const queryRunner = this.currentDataSource.createQueryRunner();
         await queryRunner.connect();
-
-        console.log('crooooooooooooooot')
-        console.log(this.currentDataSource)
-
-
         try {
-            const result = await queryRunner.query('SELECT * FROM public.pet');
+            const result = await queryRunner.query(`SELECT * FROM public.${table_name}`);
             await queryRunner.release();
             return result;
         } catch (error) {
@@ -58,4 +67,24 @@ export class PetService {
             throw error;
         }
     }
+
+
+    async findTables(): Promise<any[]> {
+        const queryRunner = this.currentDataSource.createQueryRunner()
+        await queryRunner.connect();
+        try {
+            const result = await queryRunner.query(
+                `SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public';`);
+            await queryRunner.release();
+            return result;
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            throw error;
+        }
+
+    }
+
 }
+
